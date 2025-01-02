@@ -4,6 +4,7 @@
 #include <iostream>
 #include <vector>
 #include <string>
+#include <algorithm>
 
 using namespace std;
 
@@ -13,7 +14,18 @@ private:
     T* data;            // 객체 생성시 입력된 값의 자료형에 맞추어 생성됨
     int currentSize;    // 현재 배열에 할당된 원소의 개수
     int currentCapacity;// 현재 배열의 크기
-    void resize();      // 필수 기능에서는 사용하지 않는다.
+    void resize(int newCapacity) {
+        if (currentCapacity >= newCapacity) cout << "입력된 크기가 현재 크기보다 작습니다." << endl;
+        else {
+            T* newData = new T[newCapacity];
+            for (int i = 0; i < currentSize; i++) {
+                newData[i] = data[i];
+            }
+            delete[] data;
+            data = newData;
+            currentCapacity = newCapacity;
+        }
+    }
 
 public:
     // 입력받은 값이 없을 때의 생성자
@@ -27,18 +39,27 @@ public:
         currentSize = 0;
         data = new T[capacity]; // 템플릿을 통해 입력받은 자료형의 객체를 생성한다.
     }
+
+    SimpleVector(const SimpleVector& others) {
+        this->currentSize = others.currentSize;
+        this->currentCapacity = others.currentCapacity;
+        this->data = new T[this->currentCapacity];
+        for (int i = 0; i < this->currentSize; i++) {
+            this->data[i] = others.data[i];
+        }
+    }
     // 소멸자
     ~SimpleVector() {
         delete[] data;          // 프로그램이 종료될 때 data 객체도 함께 제거한다. (그러나 보이드 포인터에서는 작동되지 않는것 같다.)
     }
     void push_back(const T& x) {                // 템플릿을 통해 입력받은 자료형의 값을 배열에 넣는다.
-        if (currentSize < currentCapacity) {
-            data[currentSize] = x;
-            cout << "입력받은 " << x << "을 맨 뒤에 추가합니다" << endl;
-            currentSize++;
-            cout << "원소의 개수는 " << currentSize << "가 되었습니다." << endl << endl;
+        if (currentSize >= currentCapacity) {
+            resize(currentCapacity + 5);
         }
-        else cout << "배열이 가득 찼습니다." << endl << endl;
+        data[currentSize] = x;
+        cout << "입력받은 " << x << "을 맨 뒤에 추가합니다" << endl;
+        currentSize++;
+        cout << "원소의 개수는 " << currentSize << "가 되었습니다." << endl << endl;
     }
     void pop_back() {                           // 원소의 개수를 줄인다.
         if (currentSize > 0) {
@@ -57,6 +78,11 @@ public:
         return data[num];
     }
 
+    void sortData() {
+        sort(data, data + currentSize);
+        cout << "배열의 정렬이 완료되었습니다." << endl << endl;
+    }
+
 };
 
 int main() {
@@ -70,7 +96,7 @@ int main() {
     void* vecptr = nullptr; // AI의 도움으로 구현한 void포인터 (포인터의 포인터라고 불린다고 한다)
     string inputType;       // 입력받을 배열의 타입
     while (1) {
-        cout << "만들고자하는 배열의 타입을 입력해 주세요. (int, string)" << endl;
+        cout << "만들고자하는 배열의 타입을 입력해 주세요. (int, string)" << endl; // 타입이 많아지면 너무 난잡해져서 2가지로만 했습니다.
         cin >> inputType;
         if (inputType == "int") {                       // 입력받은 자료형이 int 타입인 경우
             vecptr = new SimpleVector<int>(capacity);   // int 타입의 객체를 생성한다.
@@ -86,7 +112,7 @@ int main() {
     cout << "크기가 " << capacity << "인 " << inputType << "배열이 생성되었습니다." << endl << endl;
 
     for (char i = 'a'; i != 'x';) {                     // 반복문을 통해 작업, x입력시 탈출
-        cout << "어떤 작업을 하시겠습니까? (1 : push_back / 2 : pop_back / x : 작업종료)" << endl;
+        cout << "어떤 작업을 하시겠습니까? (1 : push_back / 2 : pop_back / 3 : sort / x : 작업종료)" << endl;
         cin >> i;                                       // 선택지 입력
         switch (i) {
         case '1':
@@ -108,6 +134,14 @@ int main() {
             }
             else if (inputType == "string") {              // 자료형이 string인 경우 작동
                 ((SimpleVector<string>*)vecptr)->pop_back(); // pop_back() 메서드 호출
+            }
+            break;
+        case '3':
+            if (inputType == "int") {
+                ((SimpleVector<int>*)vecptr)->sortData();
+            }
+            else if (inputType == "string") {
+                ((SimpleVector<string>*)vecptr)->sortData();
             }
             break;
         case 'x':                                       // 반복문 종료
